@@ -1,4 +1,5 @@
 from copy import deepcopy
+from collections import deque
 
 MAP_X = 6
 MAP_Y = 6
@@ -149,60 +150,58 @@ def check_parents(node, new_array):
     return True
 
 
-def dfs(node):
-    if node.car_array[0].y + start_array[0].size == MAP_Y:
-        # if node.action == 'red R' or node.action == 'red L':
-        print_solution(node)
-        return
-    if node.depth >= MAX_LEVEL:
-        return
-    for car in node.car_array:
-        if start_array[car.index].direction == 'h':
-            if goes_right(car, node.car_array) is True:
-                new_array = deepcopy(node.car_array)
-                new_array[car.index].y += 1
-                # if check_parents(node, new_array) is True:
-                if check(new_array, node.depth + 1):
-                    new_node = Node(node, start_array[car.index].color + ' R', new_array, node.depth + 1)
-                    visited.append(new_node)
-                    # print(start_array[car.index].color + '\n')
-                    # print_map(new_node.car_array)
-                    # print('\n')
-                    dfs(new_node)
-            if goes_left(car, node.car_array) is True:
-                new_array = deepcopy(node.car_array)
-                new_array[car.index].y -= 1
-                # if check_parents(node, new_array) is True:
-                if check(new_array, node.depth + 1):
-                    new_node = Node(node, start_array[car.index].color + ' L', new_array, node.depth + 1)
-                    visited.append(new_node)
-                    # print(start_array[car.index].color + '\n')
-                    # print_map(new_node.car_array)
-                    # print('\n')
-                    dfs(new_node)
-        elif start_array[car.index].direction == 'v':
-            if goes_down(car, node.car_array) is True:
-                new_array = deepcopy(node.car_array)
-                new_array[car.index].x += 1
-                # if check_parents(node, new_array) is True:
-                if check(new_array, node.depth + 1):
-                    new_node = Node(node, start_array[car.index].color + ' D', new_array, node.depth + 1)
-                    visited.append(new_node)
-                    # print(start_array[car.index].color + '\n')
-                    # print_map(new_node.car_array)
-                    # print('\n')
-                    dfs(new_node)
-            if goes_up(car, node.car_array) is True:
-                new_array = deepcopy(node.car_array)
-                new_array[car.index].x -= 1
-                # if check_parents(node, new_array) is True:
-                if check(new_array, node.depth + 1):
-                    new_node = Node(node, start_array[car.index].color + ' U', new_array, node.depth + 1)
-                    visited.append(new_node)
-                    # print(start_array[car.index].color + '\n')
-                    # print_map(new_node.car_array)
-                    # print('\n')
-                    dfs(new_node)
+def dfs(stack):
+    visited.clear()
+
+    while len(stack) > 0:
+        node = stack.pop()
+
+        if node.depth < MAX_LEVEL:
+            for car in node.car_array:
+                if start_array[car.index].direction == 'h':
+
+                    if goes_right(car, node.car_array) is True:
+                        new_array = deepcopy(node.car_array)
+                        new_array[car.index].y += 1
+                        if check(new_array, node.depth + 1):
+                            new_node = Node(node, start_array[car.index].color + ' R', new_array, node.depth + 1)
+                            if new_node.car_array[0].y + start_array[0].size == MAP_Y:
+                                return new_node
+                            visited.append(new_node)
+                            stack.append(new_node)
+
+                    if goes_left(car, node.car_array) is True:
+                        new_array = deepcopy(node.car_array)
+                        new_array[car.index].y -= 1
+                        if check(new_array, node.depth + 1):
+                            new_node = Node(node, start_array[car.index].color + ' L', new_array, node.depth + 1)
+                            if new_node.car_array[0].y + start_array[0].size == MAP_Y:
+                                return new_node
+                            visited.append(new_node)
+                            stack.append(new_node)
+
+                elif start_array[car.index].direction == 'v':
+
+                    if goes_down(car, node.car_array) is True:
+                        new_array = deepcopy(node.car_array)
+                        new_array[car.index].x += 1
+                        if check(new_array, node.depth + 1):
+                            new_node = Node(node, start_array[car.index].color + ' D', new_array, node.depth + 1)
+                            if new_node.car_array[0].y + start_array[0].size == MAP_Y:
+                                return new_node
+                            visited.append(new_node)
+                            stack.append(new_node)
+
+                    if goes_up(car, node.car_array) is True:
+                        new_array = deepcopy(node.car_array)
+                        new_array[car.index].x -= 1
+                        if check(new_array, node.depth + 1):
+                            new_node = Node(node, start_array[car.index].color + ' U', new_array, node.depth + 1)
+                            if new_node.car_array[0].y + start_array[0].size == MAP_Y:
+                                return new_node
+                            visited.append(new_node)
+                            stack.append(new_node)
+    return None
 
 
 root_array = []
@@ -210,6 +209,13 @@ for index in range(0, len(start_array)):
     root_array.append(Car(index, start_array[index].x, start_array[index].y))
 
 root = Node(None, None, root_array, 0)
-visited = [root]
+visited = []
+start = deque()
+start.append(root)
 MAX_LEVEL = 16
-dfs(root)
+solution = dfs(start)
+if solution is None:
+    print('Neexistuje riesenie')
+else:
+    print_map(solution.car_array)
+    print_solution(solution)
